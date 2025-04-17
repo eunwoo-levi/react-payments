@@ -12080,12 +12080,20 @@ function requireClient() {
 }
 var clientExports = requireClient();
 const ReactDOM = /* @__PURE__ */ getDefaultExportFromCjs(clientExports);
+const getCardImageSrc = (cardNumber = "") => {
+  const first = cardNumber[0];
+  const second = Number(cardNumber[1]);
+  if (first === "4") return "./Visa.svg";
+  if (first === "5" && second >= 1 && second <= 5) return "./Mastercard.svg";
+  return "";
+};
 function Preview({ cardInfo }) {
   var _a, _b;
+  const imgSrc = getCardImageSrc(cardInfo.cardNumber[0]);
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "card-background", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "card-preview-container", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "card-preview payment-sim" }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "card-preview payment-method", children: /* @__PURE__ */ jsxRuntimeExports.jsx("img", { src: "./Mastercard.svg", alt: "Mastercard", className: "card-preview" }) })
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "card-preview payment-method", children: imgSrc !== "" && /* @__PURE__ */ jsxRuntimeExports.jsx("img", { src: imgSrc, alt: "cardType", className: "card-preview" }) })
     ] }),
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "card-preview-info-container", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "card-preview-info-card-number-container", children: [
@@ -12230,8 +12238,14 @@ const cardExpirationDateValidator = (date) => {
   if (!isValidExpirationMonth(date.month)) {
     return [0, "유효 월은 1월과 12월 사이만 입력 가능합니다."];
   }
+  if (!isTwoDigit(date.month)) {
+    return [0, "유효 월은 2자리 숫자여야 합니다."];
+  }
   if (!isNumber(date.year)) {
     return [1, "유효 연도는 숫자만 입력 가능합니다."];
+  }
+  if (!isTwoDigit(date.year)) {
+    return [1, "유효 연도는 2자리 숫자여야 합니다."];
   }
   return [-1, ""];
 };
@@ -12239,11 +12253,24 @@ const isValidExpirationMonth = (month) => {
   const num = Number(month);
   return num >= 1 && num <= 12;
 };
+const isTwoDigit = (input) => {
+  return input.length === 2;
+};
 const cardCVCValidator = (input) => {
   if (!isNumber(input)) {
     return [0, "CVC는 숫자만 입력 가능합니다."];
   }
   return [-1, ""];
+};
+const VALIDATORS = {
+  cardNumber: cardNumberValidator,
+  cardExpirationDate: cardExpirationDateValidator,
+  cardCVC: cardCVCValidator
+};
+const ERROR_KEYS = {
+  cardNumber: "cardNumberError",
+  cardExpirationDate: "cardExpirationDateError",
+  cardCVC: "cardCVCError"
 };
 function useCardInfo() {
   const [cardInfo, setCardInfo] = reactExports.useState({
@@ -12262,17 +12289,8 @@ function useCardInfo() {
       const index = Number(name[name.length - 1]);
       setCardInfo((prev) => {
         const updatedNumbers = prev.cardNumber.map((num, i) => i === index ? value : num);
-        const [errorIndex, errorMessage] = cardNumberValidator(updatedNumbers);
-        setError(
-          (prevError) => ({
-            ...prevError,
-            cardNumberError: errorIndex !== -1 ? [errorIndex, errorMessage] : [-1, ""]
-          })
-        );
-        return {
-          ...prev,
-          cardNumber: updatedNumbers
-        };
+        validateAndSetError("cardNumber", updatedNumbers, setError);
+        return { ...prev, cardNumber: updatedNumbers };
       });
       return;
     }
@@ -12280,34 +12298,15 @@ function useCardInfo() {
       const key = name.split("-")[1];
       setCardInfo((prev) => {
         const updateDate = { ...prev.cardExpirationDate, [key]: value };
-        const [errorIndex, errorMessage] = cardExpirationDateValidator(updateDate);
-        setError(
-          (prevError) => ({
-            ...prevError,
-            cardExpirationDateError: errorIndex !== -1 ? [errorIndex, errorMessage] : [-1, ""]
-          })
-        );
-        return {
-          ...prev,
-          cardExpirationDate: updateDate
-        };
+        validateAndSetError("cardExpirationDate", updateDate, setError);
+        return { ...prev, cardExpirationDate: updateDate };
       });
       return;
     }
     if (name.startsWith("cardCVC")) {
       setCardInfo((prev) => {
-        const updateCVC = value;
-        const [errorIndex, errorMessage] = cardCVCValidator(updateCVC);
-        setError(
-          (prevError) => ({
-            ...prevError,
-            cardCVCError: errorIndex !== -1 ? [errorIndex, errorMessage] : [-1, ""]
-          })
-        );
-        return {
-          ...prev,
-          cardCVC: updateCVC
-        };
+        validateAndSetError("cardCVC", value, setError);
+        return { ...prev, cardCVC: value };
       });
       return;
     }
@@ -12318,6 +12317,17 @@ function useCardInfo() {
   };
   return { cardInfo, setCardInfo, handleCardInfoChange, error };
 }
+const validateAndSetError = (key, value, setError) => {
+  const validator = VALIDATORS[key];
+  const errorKey = ERROR_KEYS[key];
+  const [errorIndex, errorMessage] = validator(value);
+  setError(
+    (prevError) => ({
+      ...prevError,
+      [errorKey]: errorIndex !== -1 ? [errorIndex, errorMessage] : [-1, ""]
+    })
+  );
+};
 function App() {
   const { cardInfo, handleCardInfoChange, error } = useCardInfo();
   return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "app-container", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("main", { className: "card-container", children: [
