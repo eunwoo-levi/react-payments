@@ -19954,16 +19954,35 @@ const CardInfoWrapper = newStyled.div`
   gap: 16px;
   margin: 45px 0;
 `;
+const AnimatedSection = newStyled.div`
+  overflow: hidden;
+  opacity: 0;
+  max-height: 0;
+  transform: translateY(10px);
+  transition: opacity 0.4s ease, max-height 0.4s ease, transform 0.4s ease;
+
+  &.visible {
+    opacity: 1;
+    max-height: 200px;
+    transform: translateY(0);
+  }
+`;
 function CardInfoContainer({
   cardInfo,
   onChange,
   error
 }) {
   return /* @__PURE__ */ jsxRuntimeExports.jsxs(CardInfoWrapper, { children: [
-    cardCVCValidator(cardInfo.cardCVC)[0] === NO_ERROR && /* @__PURE__ */ jsxRuntimeExports.jsx(CardPasswordSection, { error, onChange }),
-    cardExpirationDateValidator(cardInfo.cardExpirationDate)[0] === NO_ERROR && /* @__PURE__ */ jsxRuntimeExports.jsx(CardCVCSection, { error, onChange }),
-    cardInfo.cardIssuer !== "" && /* @__PURE__ */ jsxRuntimeExports.jsx(CardExpirationDateSection, { error, onChange }),
-    cardNumberValidator(cardInfo.cardNumber)[0] === NO_ERROR && /* @__PURE__ */ jsxRuntimeExports.jsx(CardSelection, { cardIssuer: cardInfo.cardIssuer, error, onChange }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx(AnimatedSection, { className: cardCVCValidator(cardInfo.cardCVC)[0] === NO_ERROR ? "visible" : "", children: /* @__PURE__ */ jsxRuntimeExports.jsx(CardPasswordSection, { error, onChange }) }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx(
+      AnimatedSection,
+      {
+        className: cardExpirationDateValidator(cardInfo.cardExpirationDate)[0] === NO_ERROR ? "visible" : "",
+        children: /* @__PURE__ */ jsxRuntimeExports.jsx(CardCVCSection, { error, onChange })
+      }
+    ),
+    /* @__PURE__ */ jsxRuntimeExports.jsx(AnimatedSection, { className: cardInfo.cardIssuer !== "" ? "visible" : "", children: /* @__PURE__ */ jsxRuntimeExports.jsx(CardExpirationDateSection, { error, onChange }) }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx(AnimatedSection, { className: cardNumberValidator(cardInfo.cardNumber)[0] === NO_ERROR ? "visible" : "", children: /* @__PURE__ */ jsxRuntimeExports.jsx(CardSelection, { cardIssuer: cardInfo.cardIssuer, error, onChange }) }),
     /* @__PURE__ */ jsxRuntimeExports.jsx(CardNumberSection, { error, onChange })
   ] });
 }
